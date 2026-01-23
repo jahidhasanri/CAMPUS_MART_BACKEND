@@ -26,20 +26,20 @@ async function run() {
     await client.connect();
     console.log("MongoDB connected successfully!");
 
-    const userCollection = client.db("campusmart").collection('users');
+    const userCollaction = client.db("campusmart").collection('users');
 
     // POST user
     app.post('/users', async (req, res) => {
       const user = req.body;
-      console.log(req.body);
+
       try {
-        const isExist = await userCollection.findOne({ email: user.email });
+        const isExist = await userCollaction.findOne({ email: user.email });
 
         if (isExist) {
           return res.status(200).send(isExist);
         }
 
-        const result = await userCollection.insertOne({
+        const result = await userCollaction.insertOne({
           name: user.name,
           image: user.image,
           email: user.email,
@@ -56,7 +56,6 @@ async function run() {
     // GET user
     app.get("/users", async (req, res) => {
       const { email } = req.query;
-     
       try {
         const user = await userCollaction.findOne({ email });
         if (!user) return res.status(404).send({ message: "User not found" });
