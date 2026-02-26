@@ -7,9 +7,8 @@ app.use(cors());
 app.use(express.json());
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gubl8vg.mongodb.net/?appName=Cluster0`;
-// const uri = `mongodb+srv://rifat:${process.env.DB_PASS}@cluster0.rrbhn4a.mongodb.net/?appName=Cluster0`;
-// const uri="mongodb://localhost:27017"
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gubl8vg.mongodb.net/?appName=Cluster0`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.rrbhn4a.mongodb.net/?appName=Cluster0`;
 
 console.log("DB User:", process.env.DB_USER);
 console.log("DB Pass:", process.env.DB_PASS);
@@ -25,8 +24,6 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-
-     await client.connect();
     console.log("MongoDB connected successfully!");
 
     const myDB = client.db("campusmart");
@@ -36,6 +33,7 @@ async function run() {
     // POST user
     app.post("/users", async (req, res) => {
       const user = req.body;
+      // console.log(req.body);
       try {
         const isExist = await userCollection.findOne({ email: user.email });
 
@@ -75,7 +73,7 @@ async function run() {
 
     app.post("/create-post", async (req, res) => {
       const data = req.body;
-      data.createdAt = new Date();
+      console.log(data);
       try {
         const result = await listingsCollection.insertOne(data);
         res.send(result);
@@ -108,11 +106,9 @@ async function run() {
       res.send(result)
 
     });
-       
   } catch (err) {
     console.error("MongoDB connection error:", err);
   }
-
 }
 run();
 
