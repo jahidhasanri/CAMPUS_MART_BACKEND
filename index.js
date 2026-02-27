@@ -61,9 +61,13 @@ async function run() {
       const { email } = req.query;
 
       try {
-        const user = await userCollection.findOne({ email });
-        if (!user) return res.status(404).send({ message: "User not found" });
-        res.send(user);
+        
+        let query = {}
+        if(email){
+          query.email = email
+        }
+        const result = await userCollection.find(query).toArray()
+        res.send(result)
       } catch (err) {
         // console.error("GET /users error:", err);
         res.status(500).send({ message: "server error" });
