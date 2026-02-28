@@ -1,3 +1,5 @@
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']); 
 require("dotenv").config(); 
 const express = require("express");
 const cors = require("cors");
@@ -8,7 +10,6 @@ app.use(express.json());
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gubl8vg.mongodb.net/?appName=Cluster0`;
-// const uri="mongodb://localhost:27017"
 
 console.log("DB User:", process.env.DB_USER);
 console.log("DB Pass:", process.env.DB_PASS);
@@ -71,6 +72,12 @@ async function run() {
         res.status(500).send({ message: "server error" });
       }
     });
+
+    app.get('/allusers',async(req,res)=>{
+  const alluser= userCollection.find();
+  const result = await alluser.toArray();
+  res.send(result);
+})
 
     //create a post
 
