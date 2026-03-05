@@ -25,8 +25,8 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
 
-     await client.connect();
-    console.log("MongoDB connected successfully!");
+    //  await client.connect();
+    // console.log("MongoDB connected successfully!");
 
     const myDB = client.db("campusmart");
     const userCollection = myDB.collection("users");
