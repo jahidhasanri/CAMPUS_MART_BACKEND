@@ -59,9 +59,7 @@ async function run() {
     // GET user
     app.get("/users", async (req, res) => {
       const { email } = req.query;
-
       try {
-        
         let query = {}
         if(email){
           query.email = email
