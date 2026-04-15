@@ -7,10 +7,11 @@ const app = express();
 const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
+const { ObjectId } = require("mongodb");
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gubl8vg.mongodb.net/?appName=Cluster0`;
-
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gubl8vg.mongodb.net/?appName=Cluster0`;
+const uri = "mongodb://localhost:27017/";
 console.log("DB User:", process.env.DB_USER);
 console.log("DB Pass:", process.env.DB_PASS);
 
@@ -32,6 +33,7 @@ async function run() {
     const myDB = client.db("campusmart");
     const userCollection = myDB.collection("users");
     const listingsCollection = myDB.collection("listings");
+    const cartCollection = myDB.collection("carts");
 
     // POST user
     app.post("/users", async (req, res) => {
@@ -116,6 +118,67 @@ async function run() {
       res.send(result)
 
     });
+
+    // add to card
+  app.post("/cart", async (req, res) => {
+  const cartItem = req.body;
+
+  // check if item already exists
+  const query = { postId: cartItem.postId };
+
+  const existingItem = await cartCollection.findOne(query);
+
+  if (existingItem) {
+    return res.send({ message: "Item already added to cart" });
+  }
+
+  const newItem = {
+    ...cartItem,
+    quantity: 1
+  };
+
+  const result = await cartCollection.insertOne(newItem);
+
+  res.send(result);
+});
+
+// get card items
+app.get("/cart", async (req, res) => {
+
+  const email = req.query.email;
+
+  const result = await cartCollection
+    .find({ "userInfo.email": email })
+    .toArray();
+
+  res.send(result);
+});
+
+// update quantity
+app.patch("/cart/:id", async (req, res) => {
+  const id = req.params.id;
+  const { quantity } = req.body;
+
+  const result = await cartCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { quantity } }
+  );
+
+  res.send(result);
+});
+
+// delete item from cart
+app.delete("/cart/:id", async (req, res) => {
+  const id = req.params.id;
+
+  const result = await cartCollection.deleteOne({
+    _id: new ObjectId(id)
+  });
+
+  res.send(result);
+});
+
+// payment
        
   } catch (err) {
     console.error("MongoDB connection error:", err);
