@@ -1,4 +1,5 @@
 const dns = require('dns');
+const SSLCommerzPayment = require('sslcommerz-lts')
 dns.setServers(['8.8.8.8', '8.8.4.4']); 
 require("dotenv").config(); 
 const express = require("express");
@@ -8,6 +9,10 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 const { ObjectId } = require("mongodb");
+
+const store_id = process.env.StoreId
+const store_passwd = process.env.StorePass
+const is_live = false
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
 // const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gubl8vg.mongodb.net/?appName=Cluster0`;
@@ -34,6 +39,7 @@ async function run() {
     const userCollection = myDB.collection("users");
     const listingsCollection = myDB.collection("listings");
     const cartCollection = myDB.collection("carts");
+    const FinalorderInfoCollaction = myDB.collection("finalOrders");
 
     // POST user
     app.post("/users", async (req, res) => {
@@ -179,6 +185,131 @@ app.delete("/cart/:id", async (req, res) => {
 });
 
 // payment
+app.post("/finalOrder", async (req, res) => {
+  try {
+    const { orders, user, total,userInfo } = req.body;
+const tran_id = new ObjectId().toString();
+    // Insert to DB
+    const result = await FinalorderInfoCollaction.insertOne({
+      orders,
+      userInfo,
+      total,
+      paidstatus: "pending",
+      orderStatus: "Pending",
+      createdAt: new Date(),
+      tran_id
+    });
+
+
+    // SSLCommerz Payment Data
+    const data = {
+      total_amount: total,
+      currency: "BDT",
+      tran_id,
+     success_url: `http://localhost:5000/payment/success/${tran_id}`,
+fail_url: `http://localhost:5000/payment/fail/${tran_id}`,
+cancel_url: `http://localhost:5000/payment/cancel/${tran_id}`,
+      ipn_url: "http://localhost:5000/payment/ipn",
+      shipping_method: "Courier",
+      product_name: "Food Items",
+      product_category: "Restaurant",
+      product_profile: "general",
+      cus_name: user?.name || "Customer",
+      cus_email: user?.email || "customer@example.com",
+      cus_add1: "Dhaka",
+      cus_add2: "Dhaka",
+      cus_city: "Dhaka",
+      cus_state: "Dhaka",
+      cus_postcode: "1000",
+      cus_country: "Bangladesh",
+      cus_phone: user?.phoneNumber || "01700000000",
+      cus_fax: "01711111111",
+      ship_name: user?.name || "Customer",
+      ship_add1: "Dhaka",
+      ship_add2: "Dhaka",
+      ship_city: "Dhaka",
+      ship_state: "Dhaka",
+      ship_postcode: 1000,
+      ship_country: "Bangladesh",
+    };
+
+    const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+    sslcz.init(data).then((apiResponse) => {
+      let GatewayPageURL = apiResponse.GatewayPageURL;
+      res.send({ url: GatewayPageURL });
+      console.log("Redirecting to:", GatewayPageURL);
+    });
+  } catch (err) {
+    console.error("FinalOrder Error:", err);
+    res.status(500).send({ error: "Something went wrong!" });
+  }
+});
+
+// payment success
+app.post("/payment/success/:tran_id", async (req, res) => {
+
+  const tran_id = req.params.tran_id;
+
+  const order = await FinalorderInfoCollaction.findOne({ tran_id });
+
+  if (!order) {
+    return res.send("Order not found");
+  }
+
+  await FinalorderInfoCollaction.updateOne(
+    { tran_id },
+    { $set: { paidstatus: "success" } }
+  );
+
+  // cart items delete
+  const cartIds = order.orders.map(item => new ObjectId(item._id));
+
+  await cartCollection.deleteMany({
+    _id: { $in: cartIds }
+  });
+
+  res.redirect(`http://localhost:5173/payment-success/${tran_id}`);
+});
+
+// payment fail
+app.post("/payment/fail/:tran_id", async (req, res) => {
+
+  const tran_id = req.params.tran_id;
+
+  await FinalorderInfoCollaction.deleteOne({ tran_id });
+
+  res.redirect(`http://localhost:5173/payment-fail/${tran_id}`);
+
+});
+
+app.get("/order/:tran_id", async (req, res) => {
+  const tranId = req.params.tran_id;
+  try {
+    const result = await FinalorderInfoCollaction.findOne({ tran_id: tranId }); 
+    if (!result) {
+      return res.status(404).send({ message: "Order not found" });
+    }
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "Server error" });
+  }
+});
+
+// payment cancel
+app.post("/payment/cancel/:tran_id", async (req, res) => {
+  const tran_id = req.params.tran_id;
+  const result = await FinalorderInfoCollaction.deleteOne({ tran_id: tran_id });
+
+  if (result.deletedCount > 0) {
+    res.redirect(`http://localhost:5173/payment-cancel/${tran_id}`);
+  } else {
+    res.status(400).send({ message: "Transaction not found to delete" });
+  }
+});
+
+
+
        
   } catch (err) {
     console.error("MongoDB connection error:", err);
