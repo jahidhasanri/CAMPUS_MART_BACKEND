@@ -15,8 +15,8 @@ const store_passwd = process.env.StorePass;
 const is_live = false;
 
 const { MongoClient, ServerApiVersion } = require("mongodb");
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gubl8vg.mongodb.net/?appName=Cluster0`;
-const uri = "mongodb://localhost:27017/";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gubl8vg.mongodb.net/?appName=Cluster0`;
+// const uri = "mongodb://localhost:27017/";
 console.log("DB User:", process.env.DB_USER);
 console.log("DB Pass:", process.env.DB_PASS);
 
