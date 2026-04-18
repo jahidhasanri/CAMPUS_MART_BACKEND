@@ -463,7 +463,7 @@ cancel_url: `https://campus-mart-backend-fgpdegm4n-rifat047s-projects.vercel.app
         _id: { $in: cartIds },
       });
 
-  res.redirect(`https://campusmart-alpha.vercel.app/payment-success/${tran_id}`);
+  res.redirect(`https://campusmart-alpha.vercel.app/payment/success/${tran_id}`);
 });
 
     // payment fail
@@ -472,7 +472,7 @@ cancel_url: `https://campus-mart-backend-fgpdegm4n-rifat047s-projects.vercel.app
 
       await FinalorderInfoCollaction.deleteOne({ tran_id });
 
-  res.redirect(`https://campusmart-alpha.vercel.app/payment-fail/${tran_id}`);
+  res.redirect(`https://campusmart-alpha.vercel.app/payment/fail/${tran_id}`);
 
 });
 
@@ -500,7 +500,7 @@ cancel_url: `https://campus-mart-backend-fgpdegm4n-rifat047s-projects.vercel.app
       });
 
   if (result.deletedCount > 0) {
-    res.redirect(`https://campusmart-alpha.vercel.app/payment-cancel/${tran_id}`);
+    res.redirect(`https://campusmart-alpha.vercel.app/payment/cancel/${tran_id}`);
   } else {
     res.status(400).send({ message: "Transaction not found to delete" });
   }
