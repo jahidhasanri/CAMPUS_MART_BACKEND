@@ -466,6 +466,12 @@ cancel_url: `https://campus-mart-backend-fgpdegm4n-rifat047s-projects.vercel.app
   res.redirect(`https://campusmart-alpha.vercel.app/payment/success/${tran_id}`);
 });
 
+app.get("/payment/success/:tran_id", async (req, res) => {
+  const tran_id = req.params.tran_id;
+
+  res.redirect(`https://campusmart-alpha.vercel.app/payment/success/${tran_id}`);
+});
+
     // payment fail
     app.post("/payment/fail/:tran_id", async (req, res) => {
       const tran_id = req.params.tran_id;
@@ -474,6 +480,11 @@ cancel_url: `https://campus-mart-backend-fgpdegm4n-rifat047s-projects.vercel.app
 
   res.redirect(`https://campusmart-alpha.vercel.app/payment/fail/${tran_id}`);
 
+});
+
+app.get("/payment/fail/:tran_id", (req, res) => {
+  const tran_id = req.params.tran_id;
+  res.redirect(`https://campusmart-alpha.vercel.app/payment/fail/${tran_id}`);
 });
 
     app.get("/order/:tran_id", async (req, res) => {
@@ -505,7 +516,10 @@ cancel_url: `https://campus-mart-backend-fgpdegm4n-rifat047s-projects.vercel.app
     res.status(400).send({ message: "Transaction not found to delete" });
   }
 });
-
+app.get("/payment/cancel/:tran_id", (req, res) => {
+  const tran_id = req.params.tran_id;
+  res.redirect(`https://campusmart-alpha.vercel.app/payment/cancel/${tran_id}`);
+});
 
 
        
