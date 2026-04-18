@@ -15,8 +15,8 @@ const store_passwd = process.env.StorePass;
 const is_live = false;
 
 const { MongoClient, ServerApiVersion } = require("mongodb");
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gubl8vg.mongodb.net/?appName=Cluster0`;
-// const uri = "mongodb://localhost:27017/";
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gubl8vg.mongodb.net/?appName=Cluster0`;
+const uri = "mongodb://localhost:27017/";
 console.log("DB User:", process.env.DB_USER);
 console.log("DB Pass:", process.env.DB_PASS);
 
@@ -402,10 +402,10 @@ const tran_id = new ObjectId().toString();
       total_amount: total,
       currency: "BDT",
       tran_id,
-     success_url: `http://localhost:5000/payment/success/${tran_id}`,
-fail_url: `http://localhost:5000/payment/fail/${tran_id}`,
-cancel_url: `http://localhost:5000/payment/cancel/${tran_id}`,
-      ipn_url: "http://localhost:5000/payment/ipn",
+     success_url: `https://campusmart-alpha.vercel.app/payment/success/${tran_id}`,
+fail_url: `https://campusmart-alpha.vercel.app/payment/fail/${tran_id}`,
+cancel_url: `https://campusmart-alpha.vercel.app/payment/cancel/${tran_id}`,
+      ipn_url: "https://campusmart-alpha.vercel.app/payment/ipn",
       shipping_method: "Courier",
       product_name: "Food Items",
       product_category: "Restaurant",
@@ -463,7 +463,7 @@ cancel_url: `http://localhost:5000/payment/cancel/${tran_id}`,
         _id: { $in: cartIds },
       });
 
-  res.redirect(`http://localhost:5173/payment-success/${tran_id}`);
+  res.redirect(`https://campusmart-alpha.vercel.app/payment-success/${tran_id}`);
 });
 
     // payment fail
@@ -472,7 +472,7 @@ cancel_url: `http://localhost:5000/payment/cancel/${tran_id}`,
 
       await FinalorderInfoCollaction.deleteOne({ tran_id });
 
-  res.redirect(`http://localhost:5173/payment-fail/${tran_id}`);
+  res.redirect(`https://campusmart-alpha.vercel.app/payment-fail/${tran_id}`);
 
 });
 
@@ -500,7 +500,7 @@ cancel_url: `http://localhost:5000/payment/cancel/${tran_id}`,
       });
 
   if (result.deletedCount > 0) {
-    res.redirect(`http://localhost:5173/payment-cancel/${tran_id}`);
+    res.redirect(`https://campusmart-alpha.vercel.app/payment-cancel/${tran_id}`);
   } else {
     res.status(400).send({ message: "Transaction not found to delete" });
   }
