@@ -6,6 +6,8 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 5000;
+const url="https://campus-mart-backend-six.vercel.app"
+const furl="https://campusmart-alpha.vercel.app"
 app.use(cors());
 app.use(express.json());
 const { ObjectId } = require("mongodb");
@@ -402,10 +404,10 @@ const tran_id = new ObjectId().toString();
       total_amount: total,
       currency: "BDT",
       tran_id,
-     success_url: `https://campus-mart-backend-fgpdegm4n-rifat047s-projects.vercel.app/payment/success/${tran_id}`,
-fail_url: `https://campus-mart-backend-fgpdegm4n-rifat047s-projects.vercel.app/payment/fail/${tran_id}`,
-cancel_url: `https://campus-mart-backend-fgpdegm4n-rifat047s-projects.vercel.app/payment/cancel/${tran_id}`,
-      ipn_url: "https://campus-mart-backend-fgpdegm4n-rifat047s-projects.vercel.app/payment/ipn",
+     success_url: `${url}/payment/success/${tran_id}`,
+fail_url: `${url}/payment/fail/${tran_id}`,
+cancel_url: `${url}/payment/cancel/${tran_id}`,
+      ipn_url: `${url}/payment/ipn`,
       shipping_method: "Courier",
       product_name: "Food Items",
       product_category: "Restaurant",
@@ -463,29 +465,24 @@ cancel_url: `https://campus-mart-backend-fgpdegm4n-rifat047s-projects.vercel.app
         _id: { $in: cartIds },
       });
 
-  res.redirect(`https://campusmart-alpha.vercel.app/payment/success/${tran_id}`);
+  res.redirect(`${furl}/payment/success/${tran_id}`);
 });
 
-app.get("/payment/success/:tran_id", async (req, res) => {
+
+
+app.post("/payment/fail/:tran_id", async (req, res) => {
   const tran_id = req.params.tran_id;
+  const result = await FinalorderInfoCollaction.deleteOne({ tran_id: tran_id });
 
-  res.redirect(`https://campusmart-alpha.vercel.app/payment/success/${tran_id}`);
+  if (result.deletedCount > 0) {
+    res.redirect(`${furl}/payment/fail/${tran_id}`);
+  } else {
+    res.status(400).send({ message: "Transaction not found to delete" });
+  }
 });
+ 
 
-    // payment fail
-    app.post("/payment/fail/:tran_id", async (req, res) => {
-      const tran_id = req.params.tran_id;
 
-      await FinalorderInfoCollaction.deleteOne({ tran_id });
-
-  res.redirect(`https://campusmart-alpha.vercel.app/payment/fail/${tran_id}`);
-
-});
-
-app.get("/payment/fail/:tran_id", (req, res) => {
-  const tran_id = req.params.tran_id;
-  res.redirect(`https://campusmart-alpha.vercel.app/payment/fail/${tran_id}`);
-});
 
     app.get("/order/:tran_id", async (req, res) => {
       const tranId = req.params.tran_id;
@@ -511,15 +508,12 @@ app.get("/payment/fail/:tran_id", (req, res) => {
       });
 
   if (result.deletedCount > 0) {
-    res.redirect(`https://campusmart-alpha.vercel.app/payment/cancel/${tran_id}`);
+    res.redirect(`${furl}/payment/cancel/${tran_id}`);
   } else {
     res.status(400).send({ message: "Transaction not found to delete" });
   }
 });
-app.get("/payment/cancel/:tran_id", (req, res) => {
-  const tran_id = req.params.tran_id;
-  res.redirect(`https://campusmart-alpha.vercel.app/payment/cancel/${tran_id}`);
-});
+
 
 
        
