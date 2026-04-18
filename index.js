@@ -1,7 +1,7 @@
-const dns = require('dns');
-const SSLCommerzPayment = require('sslcommerz-lts')
-dns.setServers(['8.8.8.8', '8.8.4.4']); 
-require("dotenv").config(); 
+const dns = require("dns");
+const SSLCommerzPayment = require("sslcommerz-lts");
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -10,13 +10,13 @@ app.use(cors());
 app.use(express.json());
 const { ObjectId } = require("mongodb");
 
-const store_id = process.env.StoreId
-const store_passwd = process.env.StorePass
-const is_live = false
+const store_id = process.env.StoreId;
+const store_passwd = process.env.StorePass;
+const is_live = false;
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gubl8vg.mongodb.net/?appName=Cluster0`;
-const uri = "mongodb://localhost:27017/";
+const { MongoClient, ServerApiVersion } = require("mongodb");
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gubl8vg.mongodb.net/?appName=Cluster0`;
+// const uri = "mongodb://localhost:27017/";
 console.log("DB User:", process.env.DB_USER);
 console.log("DB Pass:", process.env.DB_PASS);
 
@@ -31,7 +31,6 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-
     //  await client.connect();
     // console.log("MongoDB connected successfully!");
 
@@ -69,23 +68,48 @@ async function run() {
     app.get("/users", async (req, res) => {
       const { email } = req.query;
       try {
-        let query = {}
-        if(email){
-          query.email = email
+        let query = {};
+        if (email) {
+          query.email = email;
         }
-        const result = await userCollection.find(query).toArray()
-        res.send(result)
+        const result = await userCollection.find(query).toArray();
+        res.send(result);
       } catch (err) {
         // console.error("GET /users error:", err);
         res.status(500).send({ message: "server error" });
       }
     });
 
-    app.get('/allusers',async(req,res)=>{
-  const alluser= userCollection.find();
-  const result = await alluser.toArray();
-  res.send(result);
-})
+    app.get("/allusers", async (req, res) => {
+      const alluser = userCollection.find();
+      const result = await alluser.toArray();
+      res.send(result);
+    });
+    //update user role
+    app.patch("/users/role/:id", async (req, res) => {
+      const id = req.params.id;
+      const role = req.body.role;
+
+      const result = await userCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: { role: role },
+        },
+      );
+
+      res.send(result);
+    });
+
+    // delete user by admin
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const result = await userCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+
+      res.send(result);
+    });
 
     //create a post
 
@@ -116,205 +140,294 @@ async function run() {
       if (searchText) {
         query.title = { $regex: searchText, $options: "i" };
       }
-      if(category){
-        query.category=category
+      if (category) {
+        query.category = category;
       }
 
-      const result = await listingsCollection.find(query).skip(skip).limit(limit).sort({createdAt:-1}).toArray()
-      res.send(result)
+      const result = await listingsCollection
+        .find(query)
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .toArray();
+      res.send(result);
+    });
 
+    // get all post
+    app.get("/allposts", async (req, res) => {
+      const alluser = listingsCollection.find();
+      const result = await alluser.toArray();
+      res.send(result);
+    });
+
+    // get post by email
+    app.get("/posts", async (req, res) => {
+      const email = req.query.email;
+      const result = await listingsCollection
+        .find({ "postedBy.ownerEmail": email })
+        .toArray();
+
+      res.send(result);
+    });
+
+    // delete post by id
+    app.delete("/posts/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        console.log(id);
+        const query = { _id: new ObjectId(id) };
+
+        const result = await listingsCollection.deleteOne(query);
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ error: "Failed to delete post" });
+      }
+    });
+
+    // update post by id
+    app.put("/posts/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedData = req.body;
+
+      const result = await listingsCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updatedData },
+      );
+
+      res.send(result);
+    });
+
+    // post approve post by admin
+    app.patch("/posts/approve/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const result = await listingsCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: { status: "approved" },
+        },
+      );
+
+      res.send(result);
+    });
+
+    // get final order by email
+    app.get("/finalOrders", async (req, res) => {
+      const email = req.query.email;
+      const result = await FinalorderInfoCollaction.find({
+        "userInfo.email": email,
+      }).toArray();
+
+      res.send(result);
+    });
+
+    // get all orders
+    app.get("/allorders", async (req, res) => {
+      const alluser = FinalorderInfoCollaction.find();
+      const result = await alluser.toArray();
+      res.send(result);
+    });
+
+    // update order status by admin
+    app.patch("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const { orderStatus } = req.body;
+
+      const result = await FinalorderInfoCollaction.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: { orderStatus: orderStatus },
+        },
+      );
+
+      res.send(result);
     });
 
     // add to card
-  app.post("/cart", async (req, res) => {
-  const cartItem = req.body;
+    app.post("/cart", async (req, res) => {
+      const cartItem = req.body;
 
-  // check if item already exists
-  const query = { postId: cartItem.postId };
+      // check if item already exists
+      const query = { postId: cartItem.postId };
 
-  const existingItem = await cartCollection.findOne(query);
+      const existingItem = await cartCollection.findOne(query);
 
-  if (existingItem) {
-    return res.send({ message: "Item already added to cart" });
-  }
+      if (existingItem) {
+        return res.send({ message: "Item already added to cart" });
+      }
 
-  const newItem = {
-    ...cartItem,
-    quantity: 1
-  };
+      const newItem = {
+        ...cartItem,
+        quantity: 1,
+      };
 
-  const result = await cartCollection.insertOne(newItem);
+      const result = await cartCollection.insertOne(newItem);
 
-  res.send(result);
-});
-
-// get card items
-app.get("/cart", async (req, res) => {
-
-  const email = req.query.email;
-
-  const result = await cartCollection
-    .find({ "userInfo.email": email })
-    .toArray();
-
-  res.send(result);
-});
-
-// update quantity
-app.patch("/cart/:id", async (req, res) => {
-  const id = req.params.id;
-  const { quantity } = req.body;
-
-  const result = await cartCollection.updateOne(
-    { _id: new ObjectId(id) },
-    { $set: { quantity } }
-  );
-
-  res.send(result);
-});
-
-// delete item from cart
-app.delete("/cart/:id", async (req, res) => {
-  const id = req.params.id;
-
-  const result = await cartCollection.deleteOne({
-    _id: new ObjectId(id)
-  });
-
-  res.send(result);
-});
-
-// payment
-app.post("/finalOrder", async (req, res) => {
-  try {
-    const { orders, user, total,userInfo } = req.body;
-const tran_id = new ObjectId().toString();
-    // Insert to DB
-    const result = await FinalorderInfoCollaction.insertOne({
-      orders,
-      userInfo,
-      total,
-      paidstatus: "pending",
-      orderStatus: "Pending",
-      createdAt: new Date(),
-      tran_id
+      res.send(result);
     });
 
+    // get card items
+    app.get("/cart", async (req, res) => {
+      const email = req.query.email;
 
-    // SSLCommerz Payment Data
-    const data = {
-      total_amount: total,
-      currency: "BDT",
-      tran_id,
-     success_url: `http://localhost:5000/payment/success/${tran_id}`,
-fail_url: `http://localhost:5000/payment/fail/${tran_id}`,
-cancel_url: `http://localhost:5000/payment/cancel/${tran_id}`,
-      ipn_url: "http://localhost:5000/payment/ipn",
-      shipping_method: "Courier",
-      product_name: "Food Items",
-      product_category: "Restaurant",
-      product_profile: "general",
-      cus_name: user?.name || "Customer",
-      cus_email: user?.email || "customer@example.com",
-      cus_add1: "Dhaka",
-      cus_add2: "Dhaka",
-      cus_city: "Dhaka",
-      cus_state: "Dhaka",
-      cus_postcode: "1000",
-      cus_country: "Bangladesh",
-      cus_phone: user?.phoneNumber || "01700000000",
-      cus_fax: "01711111111",
-      ship_name: user?.name || "Customer",
-      ship_add1: "Dhaka",
-      ship_add2: "Dhaka",
-      ship_city: "Dhaka",
-      ship_state: "Dhaka",
-      ship_postcode: 1000,
-      ship_country: "Bangladesh",
-    };
+      const result = await cartCollection
+        .find({ "userInfo.email": email })
+        .toArray();
 
-    const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
-    sslcz.init(data).then((apiResponse) => {
-      let GatewayPageURL = apiResponse.GatewayPageURL;
-      res.send({ url: GatewayPageURL });
-      console.log("Redirecting to:", GatewayPageURL);
+      res.send(result);
     });
-  } catch (err) {
-    console.error("FinalOrder Error:", err);
-    res.status(500).send({ error: "Something went wrong!" });
-  }
-});
 
-// payment success
-app.post("/payment/success/:tran_id", async (req, res) => {
+    // update quantity
+    app.patch("/cart/:id", async (req, res) => {
+      const id = req.params.id;
+      const { quantity } = req.body;
 
-  const tran_id = req.params.tran_id;
+      const result = await cartCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { quantity } },
+      );
 
-  const order = await FinalorderInfoCollaction.findOne({ tran_id });
+      res.send(result);
+    });
 
-  if (!order) {
-    return res.send("Order not found");
-  }
+    // delete item from cart
+    app.delete("/cart/:id", async (req, res) => {
+      const id = req.params.id;
 
-  await FinalorderInfoCollaction.updateOne(
-    { tran_id },
-    { $set: { paidstatus: "success" } }
-  );
+      const result = await cartCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
 
-  // cart items delete
-  const cartIds = order.orders.map(item => new ObjectId(item._id));
+      res.send(result);
+    });
 
-  await cartCollection.deleteMany({
-    _id: { $in: cartIds }
-  });
+    // payment
+    app.post("/finalOrder", async (req, res) => {
+      try {
+        const { orders, user, total, userInfo } = req.body;
+        const tran_id = new ObjectId().toString();
+        // Insert to DB
+        const result = await FinalorderInfoCollaction.insertOne({
+          orders,
+          userInfo,
+          total,
+          paidstatus: "pending",
+          orderStatus: "Pending",
+          createdAt: new Date(),
+          tran_id,
+        });
 
-  res.redirect(`http://localhost:5173/payment-success/${tran_id}`);
-});
+        // SSLCommerz Payment Data
+        const data = {
+          total_amount: total,
+          currency: "BDT",
+          tran_id,
+          success_url: `http://localhost:5000/payment/success/${tran_id}`,
+          fail_url: `http://localhost:5000/payment/fail/${tran_id}`,
+          cancel_url: `http://localhost:5000/payment/cancel/${tran_id}`,
+          ipn_url: "http://localhost:5000/payment/ipn",
+          shipping_method: "Courier",
+          product_name: "Food Items",
+          product_category: "Restaurant",
+          product_profile: "general",
+          cus_name: user?.name || "Customer",
+          cus_email: user?.email || "customer@example.com",
+          cus_add1: "Dhaka",
+          cus_add2: "Dhaka",
+          cus_city: "Dhaka",
+          cus_state: "Dhaka",
+          cus_postcode: "1000",
+          cus_country: "Bangladesh",
+          cus_phone: user?.phoneNumber || "01700000000",
+          cus_fax: "01711111111",
+          ship_name: user?.name || "Customer",
+          ship_add1: "Dhaka",
+          ship_add2: "Dhaka",
+          ship_city: "Dhaka",
+          ship_state: "Dhaka",
+          ship_postcode: 1000,
+          ship_country: "Bangladesh",
+        };
 
-// payment fail
-app.post("/payment/fail/:tran_id", async (req, res) => {
+        const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+        sslcz.init(data).then((apiResponse) => {
+          let GatewayPageURL = apiResponse.GatewayPageURL;
+          res.send({ url: GatewayPageURL });
+          console.log("Redirecting to:", GatewayPageURL);
+        });
+      } catch (err) {
+        console.error("FinalOrder Error:", err);
+        res.status(500).send({ error: "Something went wrong!" });
+      }
+    });
 
-  const tran_id = req.params.tran_id;
+    // payment success
+    app.post("/payment/success/:tran_id", async (req, res) => {
+      const tran_id = req.params.tran_id;
 
-  await FinalorderInfoCollaction.deleteOne({ tran_id });
+      const order = await FinalorderInfoCollaction.findOne({ tran_id });
 
-  res.redirect(`http://localhost:5173/payment-fail/${tran_id}`);
+      if (!order) {
+        return res.send("Order not found");
+      }
 
-});
+      await FinalorderInfoCollaction.updateOne(
+        { tran_id },
+        { $set: { paidstatus: "success" } },
+      );
 
-app.get("/order/:tran_id", async (req, res) => {
-  const tranId = req.params.tran_id;
-  try {
-    const result = await FinalorderInfoCollaction.findOne({ tran_id: tranId }); 
-    if (!result) {
-      return res.status(404).send({ message: "Order not found" });
-    }
-    res.send(result);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: "Server error" });
-  }
-});
+      // cart items delete
+      const cartIds = order.orders.map((item) => new ObjectId(item._id));
 
-// payment cancel
-app.post("/payment/cancel/:tran_id", async (req, res) => {
-  const tran_id = req.params.tran_id;
-  const result = await FinalorderInfoCollaction.deleteOne({ tran_id: tran_id });
+      await cartCollection.deleteMany({
+        _id: { $in: cartIds },
+      });
 
-  if (result.deletedCount > 0) {
-    res.redirect(`http://localhost:5173/payment-cancel/${tran_id}`);
-  } else {
-    res.status(400).send({ message: "Transaction not found to delete" });
-  }
-});
+      res.redirect(`http://localhost:5173/payment-success/${tran_id}`);
+    });
 
+    // payment fail
+    app.post("/payment/fail/:tran_id", async (req, res) => {
+      const tran_id = req.params.tran_id;
 
+      await FinalorderInfoCollaction.deleteOne({ tran_id });
 
-       
+      res.redirect(`http://localhost:5173/payment-fail/${tran_id}`);
+    });
+
+    app.get("/order/:tran_id", async (req, res) => {
+      const tranId = req.params.tran_id;
+      try {
+        const result = await FinalorderInfoCollaction.findOne({
+          tran_id: tranId,
+        });
+        if (!result) {
+          return res.status(404).send({ message: "Order not found" });
+        }
+        res.send(result);
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: "Server error" });
+      }
+    });
+
+    // payment cancel
+    app.post("/payment/cancel/:tran_id", async (req, res) => {
+      const tran_id = req.params.tran_id;
+      const result = await FinalorderInfoCollaction.deleteOne({
+        tran_id: tran_id,
+      });
+
+      if (result.deletedCount > 0) {
+        res.redirect(`http://localhost:5173/payment-cancel/${tran_id}`);
+      } else {
+        res.status(400).send({ message: "Transaction not found to delete" });
+      }
+    });
   } catch (err) {
     console.error("MongoDB connection error:", err);
   }
-
 }
 run();
 
