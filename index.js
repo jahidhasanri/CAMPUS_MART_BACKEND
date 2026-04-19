@@ -206,6 +206,17 @@ async function run() {
       res.send(result);
     });
 
+    // delete order by id
+    app.delete("/orders/:id", async (req, res) => {
+  const id = req.params.id;
+
+  const result = await FinalorderInfoCollaction.deleteOne({
+    _id: new ObjectId(id),
+  });
+
+  res.send(result);
+});
+
     // update order status by admin
     app.patch("/orders/:id", async (req, res) => {
       const id = req.params.id;
