@@ -88,6 +88,28 @@ async function run() {
   res.send(result);
 })
 
+// UPDATE ROLE
+app.patch("/users/role/:id", async (req, res) => {
+  const id = req.params.id;
+  const { role } = req.body;
+
+  const result = await userCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { role } }
+  );
+
+  res.send(result);
+});
+
+app.delete("/users/:id", async (req, res) => {
+  const id = req.params.id;
+
+  const result = await userCollection.deleteOne({
+    _id: new ObjectId(id),
+  });
+
+  res.send(result);
+});
     //create a post
 
     app.post("/create-post", async (req, res) => {
